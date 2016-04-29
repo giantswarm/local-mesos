@@ -1,0 +1,98 @@
+#cloud-config
+
+---
+coreos:
+  units:
+  - name: update-engine.service
+    command: stop
+  - name: locksmithd.service
+    command: stop
+  - name: yochu.service
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Giant Swarm Yochu
+      Wants=network-online.target
+      After=network-online.target
+      Before=multi-user.target
+      [Service]
+      Type=oneshot
+      ExecStartPre=/usr/bin/mkdir -p /home/core/bin
+      ExecStartPre=/usr/bin/wget --no-verbose https://downloads.giantswarm.io/yochu/0.20.0/yochu -O /home/core/bin/yochu
+      ExecStartPre=/usr/bin/chmod +x /home/core/bin/yochu
+      ExecStart=/home/core/bin/yochu setup -v -d --steps=distribution,overlay,docker --start-daemons=true --docker-version=1.11.0
+      RemainAfterExit=yes
+      [Install]
+      WantedBy=multi-user.target
+  - name: zookeeper.service
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Zookeeper Service
+      [Service]
+      ExecStart=/usr/bin/docker run --rm \
+        --name=core-zookeeper \
+        --net=host \
+        -e MYID=1 \
+        -e SERVERS=$private_ipv4 \
+        mesoscloud/zookeeper:3.4.8-ubuntu-14.04
+      ExecStop=/usr/bin/docker stop -t 10 core-zookeeper
+  - name: mesos-master.service
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Mesos Master Service
+      [Service]
+      ExecStart=/usr/bin/docker run --rm \
+        --name core-mesos-master \
+        --net host \
+        -e MESOS_HOSTNAME=$public_ipv4 \
+        -e MESOS_IP=$public_ipv4 \
+        -e MESOS_QUORUM=1 \
+        -e MESOS_ZK=zk://$private_ipv4:2181/mesos \
+        -e MESOS_CLUSTER=giantswarm \
+        mesoscloud/mesos-master:0.28.1-ubuntu-14.04
+      ExecStop=/usr/bin/docker stop -t 10 core-mesos-master
+  - name: mesos-slave.service
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Mesos Slave Service
+      [Service]
+      ExecStart=/usr/bin/docker run --rm \
+        --name core-mesos-slave \
+        --net host \
+        --privileged \
+        -v /sys/fs/cgroup:/sys/fs/cgroup \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v /usr/bin/docker:/usr/bin/docker \
+        -v /usr/lib/libdevmapper.so.1.02:/usr/lib/libdevmapper.so.1.02 \
+        -e MESOS_HOSTNAME=$public_ipv4 \
+        -e MESOS_IP=$public_ipv4 \
+        -e MESOS_ZK=$public_ipv4:2181/mesos \
+        -e MESOS_MASTER=zk://$private_ipv4:2181/mesos \
+        -e MESOS_CONTAINERIZERS=docker \
+        mesoscloud/mesos-slave:0.28.1-ubuntu-14.04
+      ExecStop=/usr/bin/docker stop -t 10 core-mesos-slave
+  - name: marathon.service
+    command: start
+    enable: true
+    content: |
+      [Unit]
+      Description=Marathon Service
+      [Service]
+      ExecStart=/usr/bin/docker run --rm \
+        --name core-marathon \
+        --net host \
+        -e MARATHON_HOSTNAME=$public_ipv4 \
+        -e MARATHON_HTTPS_ADDRESS=$public_ipv4 \
+        -e MARATHON_HTTP_ADDRESS=$public_ipv4 \
+        -e MARATHON_MASTER=zk://$private_ipv4:2181/mesos \
+        -e MARATHON_ZK=zk://$private_ipv4:2181/marathon \
+        -e LIBPROCESS_IP=$public_ipv4 \
+        mesoscloud/marathon:1.1.1-ubuntu-15.04
+      ExecStop=/usr/bin/docker stop -t 10 core-marathon
