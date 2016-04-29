@@ -43,7 +43,7 @@ end
 # Change basename of the VM
 # The default value is "core", which results in VMs named starting with
 # "core-01" through to "core-${num_instances}".
-#$instance_name_prefix="core"
+$instance_name_prefix="local-mesos"
 
 # Change the version of CoreOS to be installed
 # To deploy a specific version, simply set $image_version accordingly.
@@ -66,7 +66,7 @@ end
 # If 2375 is used, Vagrant will auto-increment (e.g. in the case of $num_instances > 1)
 # You can then use the docker tool locally by setting the following env var:
 #   export DOCKER_HOST='tcp://127.0.0.1:2375'
-#$expose_docker_tcp=2375
+$expose_docker_tcp=2375
 
 # Enable NFS sharing of your home directory ($HOME) to CoreOS
 # It will be mounted at the same path in the VM as on the host.
@@ -75,8 +75,8 @@ end
 
 # Customize VMs
 #$vm_gui = false
-#$vm_memory = 1024
-#$vm_cpus = 1
+$vm_memory = 2048
+$vm_cpus = 2
 
 # Share additional folders to the CoreOS VMs
 # For example,
@@ -86,4 +86,4 @@ end
 #$shared_folders = {}
 
 # Enable port forwarding from guest(s) to host machine, syntax is: { 80 => 8080 }, auto correction is enabled by default.
-#$forwarded_ports = {}
+$forwarded_ports = {2181 => 2181, 5050 => 5050, 8080 => 8080}
