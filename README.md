@@ -1,7 +1,5 @@
 # local-mesos
 
-[![IRC Channel](https://img.shields.io/badge/irc-%23giantswarm-blue.svg)](https://kiwiirc.com/client/irc.freenode.net/#giantswarm)
-
 `local-mesos` is an opinionated remix of [coreos-vagrant](https://github.com/coreos/coreos-vagrant), built as a demo of running a Mesos cluster with Marathon.
 
 The virtual machine runs one instance of the Mesos Master and Mesos Slave, as well as a Zookeeper instance and a Marathon instance. These are all run as Docker containers, configured in the cloud-config, and using the official Mesosphere images.
@@ -26,7 +24,6 @@ Clone the git repository: https://github.com/giantswarm/local-mesos.git
 ## Contact
 
 - Mailing list: [giantswarm](https://groups.google.com/forum/!forum/giantswarm)
-- IRC: #[giantswarm](irc://irc.freenode.org:6667/#giantswarm) on freenode.org
 - Bugs: [issues](https://github.com/giantswarm/local-mesos/issues)
 
 ## Contributing & Reporting Bugs
